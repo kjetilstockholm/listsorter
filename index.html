@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify-låtrankare</title>
+    <title>Spotify låtrankare</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <style>
@@ -260,35 +260,6 @@
             return `${fA} - ${fT}`;
         }
 
-        function parseAndLoadCSV(csvData, playlistId, displayName) {
-            Papa.parse(csvData, {
-                header: true, skipEmptyLines: true, delimiter: ",", encoding: "UTF-8",
-                complete: function(results) {
-                    currentPlaylistId = playlistId;
-                    currentPlaylistName = displayName;
-
-                    const allSongsList = document.getElementById('all-songs');
-                    allSongsList.innerHTML = ''; 
-                    document.getElementById('top-list').innerHTML = '';
-                    document.getElementById('bottom-list').innerHTML = '';
-                    document.getElementById('neutral-list').innerHTML = '';
-
-                    results.data.forEach(row => {
-                        const title = row['Track Name'] || row['Låtnamn'] || row['Name'];
-                        const artist = row['Artist Name(s)'] || row['Artist Name'] || row['Artist'];
-                        const trackUri = row['Track URI'];
-                        if (!title || !artist) return; 
-
-                        let trackId = '';
-                        if (trackUri && trackUri.includes('spotify:track:')) trackId = trackUri.split(':')[2];
-                        allSongsList.appendChild(createSongElement(artist, title, trackId));
-                    });
-                    updateCounters();
-                    saveState(); 
-                }
-            });
-        }
-
         // --- LÄS IN DROPDOWN.TXT FRÅN SERVERN ---
         function loadDropdownMenu() {
             fetch('dropdown.txt')
@@ -298,7 +269,7 @@
                 })
                 .then(text => {
                     const selectEl = document.getElementById('server-list-select');
-                    selectEl.innerHTML = '<option value="">-- Välj en spellista --</option>'; // Rensa felmeddelandet
+                    selectEl.innerHTML = '<option value="">-- Välj en spellista --</option>'; 
                     
                     const lines = text.split('\n');
                     lines.forEach(line => {
@@ -307,13 +278,11 @@
                             let fileName = line;
                             let displayName = line;
 
-                            // Kolla om raden innehåller ett kommatecken (t.ex. "lista1.csv,Mitt Namn")
                             if (line.includes(',')) {
                                 const parts = line.split(',');
                                 fileName = parts[0].trim();
                                 displayName = parts[1].trim();
                             } else {
-                                // Om inget kommatecken, städa upp filnamnet automatiskt
                                 displayName = fileName.replace('.csv', '').replace(/[-_]/g, ' ');
                                 displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
                             }
@@ -325,7 +294,6 @@
                         }
                     });
 
-                    // När menyn är laddad, kolla om vi har en senast aktiv lista i minnet
                     const lastActive = localStorage.getItem('spotifyRanking_lastActive');
                     if(lastActive && lastActive !== "default") {
                         loadState(lastActive);
@@ -337,30 +305,67 @@
                 });
         }
 
+        // --- NY OCH MER ROBUST LADDNING VIA DROPDOWN ---
         document.getElementById('server-list-select').addEventListener('change', function(event) {
             const fileName = event.target.value;
             const displayName = event.target.options[event.target.selectedIndex].text;
             
             if (!fileName) return; 
 
+            // Om vi redan har sparat arbete i minnet, hoppa över nedladdningen
             if (loadState(fileName)) {
                 return; 
             }
 
-            fetch(fileName)
-                .then(response => {
-                    if (!response.ok) throw new Error('Hittade inte filen');
-                    return response.text();
-                })
-                .then(csvText => {
-                    parseAndLoadCSV(csvText, fileName, displayName);
-                })
-                .catch(err => {
-                    alert('Kunde inte ladda filen. Har du laddat upp "' + fileName + '" till GitHub än?');
-                    console.error(err);
-                });
+            // Ge visuell feedback att vi laddar från servern
+            document.getElementById('all-songs').innerHTML = '<div style="padding: 15px; color: #1DB954;">Hämtar låtar från servern...</div>';
+
+            // Använd PapaParse inbyggda "download" - extremt stabilt för serverfiler!
+            Papa.parse(fileName, {
+                download: true,
+                header: true, 
+                skipEmptyLines: true, 
+                delimiter: ",",
+                complete: function(results) {
+                    currentPlaylistId = fileName;
+                    currentPlaylistName = displayName;
+
+                    const allSongsList = document.getElementById('all-songs');
+                    allSongsList.innerHTML = ''; 
+                    document.getElementById('top-list').innerHTML = '';
+                    document.getElementById('bottom-list').innerHTML = '';
+                    document.getElementById('neutral-list').innerHTML = '';
+
+                    let addedCount = 0;
+
+                    results.data.forEach(row => {
+                        const title = row['Track Name'] || row['Låtnamn'] || row['Name'];
+                        const artist = row['Artist Name(s)'] || row['Artist Name'] || row['Artist'];
+                        const trackUri = row['Track URI'];
+                        if (!title || !artist) return; 
+
+                        addedCount++;
+                        let trackId = '';
+                        if (trackUri && trackUri.includes('spotify:track:')) trackId = trackUri.split(':')[2];
+                        allSongsList.appendChild(createSongElement(artist, title, trackId));
+                    });
+
+                    // Om filen lästes in men var tom/saknade rätt rubriker
+                    if (addedCount === 0) {
+                        allSongsList.innerHTML = '<div style="padding: 15px; color: #e22134;">Filen hittades, men inga låtar kunde läsas. Säkerställ att det är en äkta Exportify CSV!</div>';
+                    }
+
+                    updateCounters();
+                    saveState(); 
+                },
+                error: function(err) {
+                    alert('Kunde inte ladda ner "' + fileName + '". Säkerställ att filen finns på GitHub och är exakt rätt stavad i dropdown.txt!');
+                    document.getElementById('all-songs').innerHTML = '';
+                }
+            });
         });
 
+        // --- MANUELL UPPLADDNING ---
         document.getElementById('csv-upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -421,10 +426,3 @@
                 alert('Allt kopierat till urklipp!\n\n' + text);
             }).catch(() => prompt('Kopiera härifrån:', text));
         }
-        
-        // Starta programmet genom att hämta textfilen och bygga menyn!
-        loadDropdownMenu();
-        updateCounters();
-    </script>
-</body>
-</html>
