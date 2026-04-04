@@ -40,7 +40,7 @@
 
     <div class="grid-container">
         <div class="left-col">
-            <h1>Antons Vansinnesprojekt 2026</h1>
+            <h1>Mina 50 Låtar</h1>
             <div class="header-controls">
                 <label style="font-size: 12px; color: #aaa;">1. Välj lista från servern</label>
                 <select id="server-list-select">
@@ -179,7 +179,7 @@
             return `${fA} - ${fT}`;
         }
 
-        // --- PANSARVAGNS-INLÄSNING (Hittar kolumner oavsett stora/små bokstäver) ---
+        // --- PANSARVAGNS-INLÄSNING ---
         function processCSVData(results, fileName, displayName) {
             currentPlaylistId = fileName;
             currentPlaylistName = displayName;
@@ -193,7 +193,6 @@
             let addedCount = 0;
 
             results.data.forEach(row => {
-                // Gör om alla kolumnnamn till små bokstäver och trimmar mellanslag för att garantera träff
                 const lowerKeys = Object.keys(row).reduce((acc, key) => {
                     acc[key.trim().toLowerCase()] = row[key];
                     return acc;
@@ -212,9 +211,8 @@
             });
 
             if (addedCount === 0 && results.data.length > 0) {
-                // Felsöknings-popup om datan hittas men inte förstås!
                 const sampleRow = JSON.stringify(Object.keys(results.data[0]));
-                alert(`Kunde läsa filen, men hittade inga låtar. Programmet letade efter 'Track Name' och 'Artist Name(s)'.\n\nDin fils rubriker ser ut så här:\n${sampleRow}`);
+                alert(`Filen hittades, men hittade inga kolumner för låtar.\n\nDin fils rubriker:\n${sampleRow}`);
                 allSongsList.innerHTML = '<div style="padding: 15px; color: #e22134;">Felaktigt format i filen. Se felmeddelandet.</div>';
             }
 
@@ -269,42 +267,53 @@
                 });
         }
 
-        // Laddning från dropdown (Server)
+        // --- UPPDATERAD SERVER-LADDNING MED EXAKTA FELMEDDELANDEN ---
         document.getElementById('server-list-select').addEventListener('change', function(event) {
             const fileName = event.target.value;
             const displayName = event.target.options[event.target.selectedIndex].text;
+            
             if (!fileName) return; 
             if (loadState(fileName)) return; 
 
             document.getElementById('all-songs').innerHTML = '<div style="padding: 15px; color: #1DB954;">Hämtar låtar från servern...</div>';
 
-            // Observera: Ingen 'delimiter' specificerad längre, PapaParse får gissa!
-            Papa.parse(fileName + '?t=' + Date.now(), { 
-                download: true,
-                header: true, 
-                skipEmptyLines: true, 
-                encoding: "UTF-8",
-                complete: function(results) {
-                    processCSVData(results, fileName, displayName);
-                },
-                error: function(err) {
-                    alert('Kunde inte ladda ner filen. Ligger den på GitHub?');
+            fetch(fileName + '?t=' + Date.now())
+                .then(response => {
+                    if (!response.ok) {
+                        // Kasta ett fel som innehåller HTTP-statuskoden (t.ex. 404)
+                        throw new Error(`Servern svarade med felkod: ${response.status}`);
+                    }
+                    return response.text();
+                })
+                .then(csvText => {
+                    // Vi skickar in texten i PapaParse istället för att låta PapaParse ladda ner den
+                    Papa.parse(csvText, {
+                        header: true, 
+                        skipEmptyLines: true, 
+                        // Vi struntar i att sätta delimiter här också, så PapaParse får analysera texten fritt!
+                        complete: function(results) {
+                            processCSVData(results, fileName, displayName);
+                        },
+                        error: function(err) {
+                            alert('Ett fel uppstod när texten skulle tolkas: ' + err.message);
+                        }
+                    });
+                })
+                .catch(err => {
+                    console.error("Fel vid inläsning:", err);
+                    alert(`Kunde inte ladda "${fileName}" från servern!\n\nDetaljer: ${err.message}\n\nTre tips att kolla upp:\n1. Kör du från din dator? Menyn funkar bara från din GitHub-länk.\n2. Ligger filen på GitHub?\n3. Viktigt: Stämmer stora/små bokstäver EXAKT överens mellan din dropdown.txt och filens faktiska namn?`);
                     document.getElementById('all-songs').innerHTML = '';
-                }
-            });
+                });
         });
 
-        // Laddning via lokal "Välj fil"
         document.getElementById('csv-upload').addEventListener('change', function(event) {
             const file = event.target.files[0];
             if (!file) return;
             document.getElementById('server-list-select').value = ""; 
 
-            // Observera: Ingen 'delimiter' specificerad här heller!
             Papa.parse(file, {
                 header: true, 
                 skipEmptyLines: true, 
-                encoding: "UTF-8",
                 complete: function(results) {
                     const tempId = "local_" + file.name.replace(".csv", "");
                     const displayName = file.name.replace(".csv", "");
