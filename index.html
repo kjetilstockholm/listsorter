@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify Låtrankare</title>
+    <title>Spotify-låtrankare</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
     <style>
@@ -37,13 +37,26 @@
             background: #181818; padding: 12px; border-radius: 5px; margin-bottom: 15px; 
             flex-shrink: 0; 
         }
-        input[type="file"] { background: #333; padding: 6px; border-radius: 5px; color: white; border: 1px solid #555; cursor: pointer; font-size: 14px; width: 100%; box-sizing: border-box; margin-top: 5px; margin-bottom: 10px;}
+        
+        select, input[type="file"] { 
+            background: #333; padding: 8px; border-radius: 5px; color: white; 
+            border: 1px solid #555; cursor: pointer; font-size: 14px; 
+            width: 100%; box-sizing: border-box; margin-top: 5px; margin-bottom: 10px;
+        }
+        
+        .btn-group { display: flex; gap: 8px; }
         
         .main-export-btn {
-            background: #1DB954; color: black; border: none; padding: 10px; width: 100%;
+            background: #1DB954; color: black; border: none; padding: 10px; flex-grow: 1;
             border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 14px;
         }
         .main-export-btn:hover { background: #1ed760; }
+
+        .clear-btn {
+            background: #e22134; color: white; border: none; padding: 10px; 
+            border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 12px;
+        }
+        .clear-btn:hover { background: #c11b2b; }
 
         #spotify-player {
             margin-top: 15px;
@@ -104,12 +117,22 @@
 
     <div class="grid-container">
         <div class="left-col">
-            <h1>Antons Vansinnesprojekt: Mina 50 Låtar</h1>
+            <h1>Mina 50 Låtar</h1>
             <div class="header-controls">
-                <label style="font-size: 12px; color: #aaa;">1. Importera CSV</label>
+                
+                <label style="font-size: 12px; color: #aaa;">1. Välj lista från servern</label>
+                <select id="server-list-select">
+                    <option value="">-- Låtar laddas inte --</option>
+                </select>
+
+                <label style="font-size: 12px; color: #aaa;">...eller ladda upp från datorn</label>
                 <input type="file" id="csv-upload" accept=".csv">
-                <label style="font-size: 12px; color: #aaa;">2. När du är klar</label>
-                <button class="main-export-btn" onclick="exportAll()">Exportera Topp & Botten</button>
+                
+                <label style="font-size: 12px; color: #aaa; margin-top: 10px; display:block;">2. När du är klar</label>
+                <div class="btn-group">
+                    <button class="main-export-btn" onclick="exportAll()">Exportera Topp & Botten</button>
+                    <button class="clear-btn" onclick="clearData()" title="Rensa aktuell lista">🗑️</button>
+                </div>
             </div>
             <h2>Alla låtar <span id="all-counter" class="counter"></span></h2>
             <div id="all-songs" class="list-container"></div>
@@ -135,6 +158,7 @@
     </div>
 
     <script>
+        let currentPlaylistId = "default"; 
         let currentPlaylistName = "Okänd lista";
 
         function updateCounters() {
@@ -144,7 +168,83 @@
             document.getElementById('neutral-counter').innerText = `(${document.getElementById('neutral-list').children.length})`;
         }
 
-        const sortableOptions = { group: 'shared', animation: 150, onSort: updateCounters };
+        function saveState() {
+            if(!currentPlaylistId) return;
+            const listIds = ['all-songs', 'top-list', 'bottom-list', 'neutral-list'];
+            const state = { playlistName: currentPlaylistName, lists: {} };
+
+            listIds.forEach(id => {
+                const songsElements = document.getElementById(id).querySelectorAll('.song');
+                const songsData = Array.from(songsElements).map(song => ({
+                    artist: song.getAttribute('data-artist'),
+                    title: song.getAttribute('data-title'),
+                    trackId: song.getAttribute('data-trackid') || ''
+                }));
+                state.lists[id] = songsData;
+            });
+
+            localStorage.setItem('spotifyRanking_' + currentPlaylistId, JSON.stringify(state));
+            localStorage.setItem('spotifyRanking_lastActive', currentPlaylistId);
+        }
+
+        function loadState(playlistId) {
+            const savedData = localStorage.getItem('spotifyRanking_' + playlistId);
+            if (!savedData) return false;
+
+            try {
+                const state = JSON.parse(savedData);
+                currentPlaylistName = state.playlistName;
+                currentPlaylistId = playlistId;
+
+                ['all-songs', 'top-list', 'bottom-list', 'neutral-list'].forEach(id => {
+                    const container = document.getElementById(id);
+                    container.innerHTML = ''; 
+                    if (state.lists[id]) {
+                        state.lists[id].forEach(songData => {
+                            container.appendChild(createSongElement(songData.artist, songData.title, songData.trackId));
+                        });
+                    }
+                });
+                updateCounters();
+                
+                const selectEl = document.getElementById('server-list-select');
+                if([...selectEl.options].some(opt => opt.value === playlistId)) {
+                    selectEl.value = playlistId;
+                }
+                return true;
+            } catch (e) {
+                console.error("Kunde inte ladda data", e);
+                return false;
+            }
+        }
+
+        function clearData() {
+            if(confirm('Är du säker på att du vill rensa denna lista och börja om?')) {
+                localStorage.removeItem('spotifyRanking_' + currentPlaylistId);
+                ['all-songs', 'top-list', 'bottom-list', 'neutral-list'].forEach(id => {
+                    document.getElementById(id).innerHTML = '';
+                });
+                updateCounters();
+            }
+        }
+
+        function createSongElement(artist, title, trackId) {
+            const songDiv = document.createElement('div');
+            songDiv.className = 'song';
+            songDiv.setAttribute('data-artist', artist);
+            songDiv.setAttribute('data-title', title);
+            songDiv.setAttribute('data-trackid', trackId); 
+            
+            let playBtn = '';
+            if (trackId) playBtn = `<button class="play-btn" onclick="playSong('${trackId}')">Spela</button>`;
+            songDiv.innerHTML = `<span class="song-info" title="${artist} - ${title}">${getDisplayText(artist, title)}</span>${playBtn}`;
+            return songDiv;
+        }
+
+        const sortableOptions = { 
+            group: 'shared', animation: 150, 
+            onSort: function() { updateCounters(); saveState(); } 
+        };
         new Sortable(document.getElementById('all-songs'), sortableOptions);
         new Sortable(document.getElementById('top-list'), sortableOptions);
         new Sortable(document.getElementById('neutral-list'), sortableOptions);
@@ -160,14 +260,13 @@
             return `${fA} - ${fT}`;
         }
 
-        document.getElementById('csv-upload').addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            currentPlaylistName = file.name.replace(".csv", "");
-
-            Papa.parse(file, {
+        function parseAndLoadCSV(csvData, playlistId, displayName) {
+            Papa.parse(csvData, {
                 header: true, skipEmptyLines: true, delimiter: ",", encoding: "UTF-8",
                 complete: function(results) {
+                    currentPlaylistId = playlistId;
+                    currentPlaylistName = displayName;
+
                     const allSongsList = document.getElementById('all-songs');
                     allSongsList.innerHTML = ''; 
                     document.getElementById('top-list').innerHTML = '';
@@ -180,20 +279,119 @@
                         const trackUri = row['Track URI'];
                         if (!title || !artist) return; 
 
-                        const songDiv = document.createElement('div');
-                        songDiv.className = 'song';
-                        songDiv.setAttribute('data-artist', artist);
-                        songDiv.setAttribute('data-title', title);
-                        
-                        let playBtn = '';
-                        if (trackUri && trackUri.includes('spotify:track:')) {
-                            const trackId = trackUri.split(':')[2];
-                            playBtn = `<button class="play-btn" onclick="playSong('${trackId}')">Spela</button>`;
-                        }
-                        songDiv.innerHTML = `<span class="song-info" title="${artist} - ${title}">${getDisplayText(artist, title)}</span>${playBtn}`;
-                        allSongsList.appendChild(songDiv);
+                        let trackId = '';
+                        if (trackUri && trackUri.includes('spotify:track:')) trackId = trackUri.split(':')[2];
+                        allSongsList.appendChild(createSongElement(artist, title, trackId));
                     });
                     updateCounters();
+                    saveState(); 
+                }
+            });
+        }
+
+        // --- LÄS IN DROPDOWN.TXT FRÅN SERVERN ---
+        function loadDropdownMenu() {
+            fetch('dropdown.txt')
+                .then(response => {
+                    if (!response.ok) throw new Error('Filen dropdown.txt saknas');
+                    return response.text();
+                })
+                .then(text => {
+                    const selectEl = document.getElementById('server-list-select');
+                    selectEl.innerHTML = '<option value="">-- Välj en spellista --</option>'; // Rensa felmeddelandet
+                    
+                    const lines = text.split('\n');
+                    lines.forEach(line => {
+                        line = line.trim();
+                        if (line) {
+                            let fileName = line;
+                            let displayName = line;
+
+                            // Kolla om raden innehåller ett kommatecken (t.ex. "lista1.csv,Mitt Namn")
+                            if (line.includes(',')) {
+                                const parts = line.split(',');
+                                fileName = parts[0].trim();
+                                displayName = parts[1].trim();
+                            } else {
+                                // Om inget kommatecken, städa upp filnamnet automatiskt
+                                displayName = fileName.replace('.csv', '').replace(/[-_]/g, ' ');
+                                displayName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+                            }
+
+                            const option = document.createElement('option');
+                            option.value = fileName;
+                            option.textContent = displayName;
+                            selectEl.appendChild(option);
+                        }
+                    });
+
+                    // När menyn är laddad, kolla om vi har en senast aktiv lista i minnet
+                    const lastActive = localStorage.getItem('spotifyRanking_lastActive');
+                    if(lastActive && lastActive !== "default") {
+                        loadState(lastActive);
+                    }
+                })
+                .catch(err => {
+                    console.log("Kunde inte ladda dropdown.txt. Körs sidan lokalt?", err);
+                    document.getElementById('server-list-select').innerHTML = '<option value="">(Ingen dropdown.txt hittades)</option>';
+                });
+        }
+
+        document.getElementById('server-list-select').addEventListener('change', function(event) {
+            const fileName = event.target.value;
+            const displayName = event.target.options[event.target.selectedIndex].text;
+            
+            if (!fileName) return; 
+
+            if (loadState(fileName)) {
+                return; 
+            }
+
+            fetch(fileName)
+                .then(response => {
+                    if (!response.ok) throw new Error('Hittade inte filen');
+                    return response.text();
+                })
+                .then(csvText => {
+                    parseAndLoadCSV(csvText, fileName, displayName);
+                })
+                .catch(err => {
+                    alert('Kunde inte ladda filen. Har du laddat upp "' + fileName + '" till GitHub än?');
+                    console.error(err);
+                });
+        });
+
+        document.getElementById('csv-upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            document.getElementById('server-list-select').value = ""; 
+
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true, delimiter: ",", encoding: "UTF-8",
+                complete: function(results) {
+                    const tempId = "local_" + file.name.replace(".csv", "");
+                    currentPlaylistId = tempId;
+                    currentPlaylistName = file.name.replace(".csv", "");
+
+                    const allSongsList = document.getElementById('all-songs');
+                    allSongsList.innerHTML = ''; 
+                    document.getElementById('top-list').innerHTML = '';
+                    document.getElementById('bottom-list').innerHTML = '';
+                    document.getElementById('neutral-list').innerHTML = '';
+
+                    results.data.forEach(row => {
+                        const title = row['Track Name'] || row['Låtnamn'] || row['Name'];
+                        const artist = row['Artist Name(s)'] || row['Artist Name'] || row['Artist'];
+                        const trackUri = row['Track URI'];
+                        if (!title || !artist) return; 
+
+                        let trackId = '';
+                        if (trackUri && trackUri.includes('spotify:track:')) trackId = trackUri.split(':')[2];
+                        allSongsList.appendChild(createSongElement(artist, title, trackId));
+                    });
+                    updateCounters();
+                    saveState(); 
                 }
             });
             event.target.value = '';
@@ -223,6 +421,9 @@
                 alert('Allt kopierat till urklipp!\n\n' + text);
             }).catch(() => prompt('Kopiera härifrån:', text));
         }
+        
+        // Starta programmet genom att hämta textfilen och bygga menyn!
+        loadDropdownMenu();
         updateCounters();
     </script>
 </body>
