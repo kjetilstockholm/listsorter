@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Låtrankare</title>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #121212; color: #fff; margin: 0; padding: 15px; 
+            height: 100vh; box-sizing: border-box; 
+        }
+        
+        h1 { color: #1DB954; margin: 0 0 15px 0; font-size: 22px; }
+        h2 { color: #1DB954; margin: 0 0 10px 0; font-size: 16px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .counter { font-size: 13px; font-weight: normal; color: #aaa; margin-left: 8px; }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 200px; 
+            gap: 15px;
+            height: 100%;
+        }
+
+        .left-col {
+            grid-column: 1;
+            grid-row: 1 / 3; 
+            background: #282828; padding: 15px; border-radius: 8px;
+            display: flex; flex-direction: column; min-height: 0;
+        }
+
+        .header-controls { 
+            background: #181818; padding: 12px; border-radius: 5px; margin-bottom: 15px; 
+            flex-shrink: 0; 
+        }
+        input[type="file"] { background: #333; padding: 6px; border-radius: 5px; color: white; border: 1px solid #555; cursor: pointer; font-size: 14px; width: 100%; box-sizing: border-box; margin-top: 5px; margin-bottom: 10px;}
+        
+        .main-export-btn {
+            background: #1DB954; color: black; border: none; padding: 10px; width: 100%;
+            border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 14px;
+        }
+        .main-export-btn:hover { background: #1ed760; }
+
+        #spotify-player {
+            margin-top: 15px;
+            height: 80px; 
+            border-radius: 12px;
+            overflow: hidden;
+            flex-shrink: 0;
+            display: none; 
+            background: #000;
+        }
+
+        .mid-col, .right-col {
+            background: #282828; padding: 15px; border-radius: 8px;
+            display: flex; flex-direction: column; min-height: 0;
+        }
+
+        .bottom-row {
+            grid-column: 2 / 4; 
+            grid-row: 2;
+            background: #282828; padding: 15px; border-radius: 8px;
+            display: flex; flex-direction: column; min-height: 0;
+        }
+
+        .list-container { 
+            background: #181818; padding: 8px; border-radius: 5px; 
+            flex-grow: 1; overflow-y: auto; 
+        }
+
+        #neutral-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr; 
+            gap: 4px 10px;
+            align-content: start;
+        }
+        
+        .song { 
+            background: #333; padding: 6px 10px; margin-bottom: 4px; border-radius: 4px; 
+            cursor: grab; display: flex; justify-content: space-between; align-items: center;
+            border-left: 4px solid transparent; font-size: 13px;
+        }
+        .song:active { cursor: grabbing; background: #444; }
+        .song:hover { background: #3e3e3e; }
+        
+        .song-info { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; cursor: help; }
+        
+        #top-list .song { border-left-color: #1DB954; }
+        #bottom-list .song { border-left-color: #e22134; }
+        #neutral-list .song { border-left-color: #888; margin-bottom: 0;}
+        
+        .play-btn { 
+            background: #1DB954; color: black; border: none; padding: 4px 10px; 
+            border-radius: 12px; font-size: 11px; font-weight: bold; cursor: pointer; flex-shrink: 0;
+        }
+        .play-btn:hover { background: #1ed760; }
+    </style>
+</head>
+<body>
+
+    <div class="grid-container">
+        <div class="left-col">
+            <h1>Antons Vansinnesprojekt: Mina 50 Låtar</h1>
+            <div class="header-controls">
+                <label style="font-size: 12px; color: #aaa;">1. Importera CSV</label>
+                <input type="file" id="csv-upload" accept=".csv">
+                <label style="font-size: 12px; color: #aaa;">2. När du är klar</label>
+                <button class="main-export-btn" onclick="exportAll()">Exportera Topp & Botten</button>
+            </div>
+            <h2>Alla låtar <span id="all-counter" class="counter"></span></h2>
+            <div id="all-songs" class="list-container"></div>
+            <div id="spotify-player">
+                <iframe id="sp-iframe" src="" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
+            </div>
+        </div>
+
+        <div class="mid-col">
+            <h2>Bästa 10 <span id="top-counter" class="counter"></span></h2>
+            <div id="top-list" class="list-container"></div>
+        </div>
+
+        <div class="right-col">
+            <h2>Sämsta 10 <span id="bottom-counter" class="counter"></span></h2>
+            <div id="bottom-list" class="list-container"></div>
+        </div>
+
+        <div class="bottom-row">
+            <h2>Menlösa <span id="neutral-counter" class="counter"></span></h2>
+            <div id="neutral-list" class="list-container"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlaylistName = "Okänd lista";
+
+        function updateCounters() {
+            document.getElementById('all-counter').innerText = `(${document.getElementById('all-songs').children.length})`;
+            document.getElementById('top-counter').innerText = `(${document.getElementById('top-list').children.length} tillagda)`;
+            document.getElementById('bottom-counter').innerText = `(${document.getElementById('bottom-list').children.length} tillagda)`;
+            document.getElementById('neutral-counter').innerText = `(${document.getElementById('neutral-list').children.length})`;
+        }
+
+        const sortableOptions = { group: 'shared', animation: 150, onSort: updateCounters };
+        new Sortable(document.getElementById('all-songs'), sortableOptions);
+        new Sortable(document.getElementById('top-list'), sortableOptions);
+        new Sortable(document.getElementById('neutral-list'), sortableOptions);
+        new Sortable(document.getElementById('bottom-list'), sortableOptions);
+
+        function getDisplayText(artist, title) {
+            const MAX_LEN = 57;
+            let targetA = artist.length; let targetT = title.length;
+            if (targetA + targetT <= MAX_LEN) return `${artist} - ${title}`;
+            while (targetA + targetT > MAX_LEN) { if (targetA > targetT) targetA--; else targetT--; }
+            let fA = (targetA < artist.length) ? artist.substring(0, targetA - 3) + "..." : artist;
+            let fT = (targetT < title.length) ? title.substring(0, targetT - 3) + "..." : title;
+            return `${fA} - ${fT}`;
+        }
+
+        document.getElementById('csv-upload').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            currentPlaylistName = file.name.replace(".csv", "");
+
+            Papa.parse(file, {
+                header: true, skipEmptyLines: true, delimiter: ",", encoding: "UTF-8",
+                complete: function(results) {
+                    const allSongsList = document.getElementById('all-songs');
+                    allSongsList.innerHTML = ''; 
+                    document.getElementById('top-list').innerHTML = '';
+                    document.getElementById('bottom-list').innerHTML = '';
+                    document.getElementById('neutral-list').innerHTML = '';
+
+                    results.data.forEach(row => {
+                        const title = row['Track Name'] || row['Låtnamn'] || row['Name'];
+                        const artist = row['Artist Name(s)'] || row['Artist Name'] || row['Artist'];
+                        const trackUri = row['Track URI'];
+                        if (!title || !artist) return; 
+
+                        const songDiv = document.createElement('div');
+                        songDiv.className = 'song';
+                        songDiv.setAttribute('data-artist', artist);
+                        songDiv.setAttribute('data-title', title);
+                        
+                        let playBtn = '';
+                        if (trackUri && trackUri.includes('spotify:track:')) {
+                            const trackId = trackUri.split(':')[2];
+                            playBtn = `<button class="play-btn" onclick="playSong('${trackId}')">Spela</button>`;
+                        }
+                        songDiv.innerHTML = `<span class="song-info" title="${artist} - ${title}">${getDisplayText(artist, title)}</span>${playBtn}`;
+                        allSongsList.appendChild(songDiv);
+                    });
+                    updateCounters();
+                }
+            });
+            event.target.value = '';
+        });
+
+        function playSong(trackId) {
+            const iframe = document.getElementById('sp-iframe');
+            iframe.src = `https://open.spotify.com/embed/track/${trackId}?utm_source=generator&theme=0`;
+            document.getElementById('spotify-player').style.display = 'block';
+        }
+
+        function exportAll() {
+            let text = `"${currentPlaylistName}"\n\nBästa 10 låtar:\n`;
+            
+            const topSongs = document.getElementById('top-list').querySelectorAll('.song');
+            topSongs.forEach((s, i) => {
+                text += `${i + 1}, ${s.getAttribute('data-artist')}, ${s.getAttribute('data-title')}\n`;
+            });
+
+            text += `\nSämsta 10 låtar:\n`;
+            const bottomSongs = document.getElementById('bottom-list').querySelectorAll('.song');
+            bottomSongs.forEach((s, i) => {
+                text += `${i + 1}, ${s.getAttribute('data-artist')}, ${s.getAttribute('data-title')}\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('Allt kopierat till urklipp!\n\n' + text);
+            }).catch(() => prompt('Kopiera härifrån:', text));
+        }
+        updateCounters();
+    </script>
+</body>
+</html>
