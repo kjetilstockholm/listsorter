@@ -6,132 +6,102 @@
     <title>Ranker Mobile</title>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.2/papaparse.min.js"></script>
+    <style>
+        :root { --spotify-green: #1DB954; --danger: #e22134; --bg: #121212; --card: #282828; }
+        
+        html, body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: var(--bg); color: #fff; margin: 0; 
+            height: 100dvh; width: 100vw; overflow: hidden; 
+        }
+        
+        .view { display: none; height: 100dvh; flex-direction: column; padding: 15px; box-sizing: border-box; }
+        .view.active { display: flex; }
 
-    
-    
-    
-<style>
+        h1 { font-size: 1.4rem; color: var(--spotify-green); margin: 0 0 15px 0; text-align: center; }
+        h2 { font-size: 1.1rem; color: var(--spotify-green); margin: 0; }
+        
+        .header-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
 
-:root { --spotify-green: #1DB954; --danger: #e22134; --bg: #121212; --card: #282828; }
-    
-    html, body { 
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-        background: var(--bg); color: #fff; margin: 0; 
-        height: 100%; /* Reserv för gamla mobiler */
-        height: 100dvh; /* Magiska fixen för adressfält! */
-        width: 100vw; 
-        overflow: hidden; 
-    }
-    
-    .view { 
-        display: none; 
-        height: 100%; 
-        height: 100dvh; /* Samma här */
-        flex-direction: column; 
-        padding: 15px; 
-        box-sizing: border-box; 
-    }
+        .menu-container { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; margin-bottom: 15px; }
+        
+        .btn { 
+            background: var(--card); color: white; border: none; padding: 14px; 
+            border-radius: 10px; font-size: 0.95rem; cursor: pointer; 
+            display: flex; justify-content: space-between; align-items: center; 
+            flex-shrink: 0;
+        }
+        .btn-primary { background: var(--spotify-green); color: black; font-weight: bold; }
+        
+        .export-container { margin-top: auto; padding-top: 10px; border-top: 1px solid #333; }
+        .btn-export { background: transparent; color: var(--spotify-green); border: 1px solid var(--spotify-green); width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 0.9rem; }
 
-    
-    .view.active { display: flex; }
+        select { background: #333; color: white; padding: 12px; border-radius: 8px; border: 1px solid #555; width: 100%; font-size: 1rem; margin-bottom: 15px; flex-shrink: 0; }
 
-    h1 { font-size: 1.4rem; color: var(--spotify-green); margin: 0 0 15px 0; text-align: center; }
-    h2 { font-size: 1.1rem; color: var(--spotify-green); margin: 0; }
-    
-    .header-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-shrink: 0; }
+        .card { background: var(--card); padding: 15px; border-radius: 15px; text-align: center; margin: 10px 0; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+        .song-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .song-artist { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
+        
+        .sort-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding-bottom: 15px; flex-shrink: 0; }
+        .sort-btn { border: none; padding: 15px 5px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; color: white; cursor: pointer; }
+        
+        .scroll-list { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 8px; margin-bottom: 10px; }
+        .list-item { 
+            background: var(--card); padding: 12px; margin-bottom: 6px; border-radius: 6px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-left: 4px solid #555; font-size: 0.85rem; 
+        }
+        .top-item { border-left-color: var(--spotify-green); }
+        .bot-item { border-left-color: var(--danger); }
+        
+        /* Ny knapp för att flytta låtar till menlösa */
+        .move-btn { 
+            background: rgba(255,255,255,0.1); color: #aaa; border: none; 
+            width: 30px; height: 30px; border-radius: 50%; font-size: 1rem; 
+            display: flex; align-items: center; justify-content: center; margin-left: 10px;
+        }
 
-    /* Knappar i Home-vyn */
-    .menu-container { 
-        display: flex; 
-        flex-direction: column; 
-        gap: 8px; 
-        overflow-y: auto; /* Gör så att mittenknapparna kan scrolla om de inte får plats */
-        margin-bottom: 15px;
-    }
-    
-    .btn { 
-        background: var(--card); color: white; border: none; padding: 14px; 
-        border-radius: 10px; font-size: 0.95rem; cursor: pointer; 
-        display: flex; justify-content: space-between; align-items: center; 
-        flex-shrink: 0;
-    }
-    .btn-primary { background: var(--spotify-green); color: black; font-weight: bold; }
-    
-    .export-container { margin-top: auto; padding-top: 10px; border-top: 1px solid #333; }
-    .btn-export { 
-        background: transparent; color: var(--spotify-green); border: 1px solid var(--spotify-green); 
-        width: 100%; padding: 12px; border-radius: 10px; font-weight: bold; font-size: 0.9rem;
-    }
-
-    select { 
-        background: #333; color: white; padding: 12px; border-radius: 8px; 
-        border: 1px solid #555; width: 100%; font-size: 1rem; margin-bottom: 15px; flex-shrink: 0;
-    }
-
-    /* Sorterings-kort */
-    .card { background: var(--card); padding: 15px; border-radius: 15px; text-align: center; margin: 10px 0; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
-    .song-title { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-    .song-artist { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
-    
-    .sort-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; padding-bottom: 15px; flex-shrink: 0; }
-    .sort-btn { border: none; padding: 15px 5px; border-radius: 10px; font-weight: bold; font-size: 0.8rem; color: white; }
-    
-    /* Listor */
-    .scroll-list { flex-grow: 1; overflow-y: auto; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 8px; margin-bottom: 10px; }
-    .list-item { background: var(--card); padding: 10px; margin-bottom: 6px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; border-left: 4px solid #555; font-size: 0.85rem; }
-    
-    #player-container { height: 80px; background: #000; border-radius: 10px; overflow: hidden; margin-top: auto; flex-shrink: 0; }
-    .footer-controls { display: flex; justify-content: center; gap: 15px; padding-bottom: 5px; flex-shrink: 0; }
-    .small-btn { background: #333; color: #eee; border: none; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; }
-</style>
-
-
+        #player-container { height: 80px; background: #000; border-radius: 10px; overflow: hidden; margin-top: auto; flex-shrink: 0; }
+        .footer-controls { display: flex; justify-content: center; gap: 15px; padding-bottom: 5px; flex-shrink: 0; }
+        .small-btn { background: #333; color: #eee; border: none; padding: 10px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
+    </style>
 </head>
 <body>
 
-
-
-<div id="view-home" class="view active">
-    <h1>Mobilsorteraren</h1>
-    
-    <select id="server-list-select">
-        <option value="">Laddar menyer...</option>
-    </select>
-
-    <div class="menu-container">
-        <button class="btn btn-primary" onclick="showView('view-sort')">🚀 Sortera Låtar <span id="count-all"></span></button>
-        <button class="btn" onclick="showView('view-top')">🏆 Topp 10 <span id="count-top"></span></button>
-        <button class="btn" onclick="showView('view-bottom')">💩 Botten 10 <span id="count-bottom"></span></button>
-        <button class="btn" onclick="showView('view-neutral')">⚙️ Menlösa <span id="count-neutral"></span></button>
+    <div id="view-home" class="view active">
+        <h1>Ranker Mobile</h1>
+        <select id="server-list-select">
+            <option value="">Laddar menyer...</option>
+        </select>
+        <div class="menu-container">
+            <button class="btn btn-primary" onclick="showView('view-sort')">🚀 Sortera Låtar <span id="count-all"></span></button>
+            <button class="btn" onclick="showView('view-top')">🏆 Topp 10 <span id="count-top"></span></button>
+            <button class="btn" onclick="showView('view-bottom')">💩 Botten 10 <span id="count-bottom"></span></button>
+            <button class="btn" onclick="showView('view-neutral')">⚙️ Menlösa <span id="count-neutral"></span></button>
+        </div>
+        <div class="export-container">
+            <button class="btn-export" onclick="exportAll()">📋 KOPIERA RESULTAT</button>
+        </div>
     </div>
-
-    <div class="export-container">
-        <button class="btn-export" onclick="exportAll()">📋 KOPIERA RESULTAT</button>
-    </div>
-</div>
-
-
 
     <div id="view-sort" class="view">
         <div class="header-nav">
             <button class="small-btn" onclick="showView('view-home')">🏠 Hem</button>
             <div id="sort-progress" style="color: #aaa; font-size: 0.9rem;">0 / 0</div>
         </div>
-        
         <div class="card">
             <div class="song-title" id="display-title">Laddar...</div>
             <div class="song-artist" id="display-artist">Välj en lista</div>
             <div id="player-container">
                 <iframe id="sp-iframe" src="" width="100%" height="80" frameborder="0" allowtransparency="true" allow="encrypted-media"></iframe>
             </div>
+            <button id="open-spotify-btn" class="btn btn-primary" style="margin-top: 10px; padding: 10px; justify-content: center; display: none;">🎧 Öppna i Spotify</button>
         </div>
-
         <div class="sort-controls">
             <button class="sort-btn" style="background: var(--danger);" onclick="sortCurrent('bottom')">DÅLIG</button>
             <button class="sort-btn" style="background: #555;" onclick="sortCurrent('neutral')">MENLÖS</button>
             <button class="sort-btn" style="background: var(--spotify-green); color: black;" onclick="sortCurrent('top')">BRA</button>
         </div>
-        
         <div class="footer-controls">
             <button class="small-btn" onclick="prevSong()">⬅️ Bakåt</button>
             <button class="small-btn" onclick="nextSong()">Fram ➡️</button>
@@ -139,26 +109,18 @@
     </div>
 
     <div id="view-top" class="view">
-        <div class="header-nav">
-            <h2>Bästa 10</h2>
-            <button class="small-btn" onclick="showView('view-home')">🏠 Hem</button>
-        </div>
+        <div class="header-nav"><h2>Bästa 10</h2><button class="small-btn" onclick="showView('view-home')">🏠 Hem</button></div>
         <div id="list-top" class="scroll-list"></div>
     </div>
 
     <div id="view-bottom" class="view">
-        <div class="header-nav">
-            <h2>Sämsta 10</h2>
-            <button class="small-btn" onclick="showView('view-home')">🏠 Hem</button>
-        </div>
+        <div class="header-nav"><h2>Sämsta 10</h2><button class="small-btn" onclick="showView('view-home')">🏠 Hem</button></div>
         <div id="list-bottom" class="scroll-list"></div>
     </div>
 
     <div id="view-neutral" class="view">
-        <div class="header-nav">
-            <h2>Menlösa (Arkiv)</h2>
-            <button class="small-btn" onclick="showView('view-home')">🏠 Hem</button>
-        </div>
+        <div class="header-nav"><h2>Menlösa (Arkiv)</h2><button class="small-btn" onclick="showView('view-home')">🏠 Hem</button></div>
+        <p style="font-size: 0.7rem; color: #888; text-align: center; margin: 0 0 10px 0;">Klicka på en låt för att flytta tillbaka den till kön.</p>
         <div id="list-neutral" class="scroll-list"></div>
     </div>
 
@@ -168,7 +130,6 @@
         let currentPlaylistId = "";
         let currentPlaylistName = "";
 
-        // --- VY-HANTERING ---
         function showView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(viewId).classList.add('active');
@@ -177,44 +138,32 @@
             updateCounters();
         }
 
-        // --- LADDA DROPDOWN ---
-        fetch('dropdown.txt?t=' + Date.now())
-            .then(res => res.text())
-            .then(text => {
-                const select = document.getElementById('server-list-select');
-                select.innerHTML = '<option value="">-- Välj spellista --</option>';
-                text.split('\n').forEach(line => {
-                    if(!line.trim()) return;
-                    const [file, name] = line.includes(',') ? line.split(',') : [line, line];
-                    const opt = document.createElement('option');
-                    opt.value = file.trim();
-                    opt.textContent = name.trim();
-                    select.appendChild(opt);
-                });
-                
-                // Ladda senaste sessionen om den finns
-                const lastId = localStorage.getItem('mobile_last_playlist');
-                if(lastId) {
-                    currentPlaylistId = lastId;
-                    loadState();
-                }
+        // Ladda dropdown.txt
+        fetch('dropdown.txt?t=' + Date.now()).then(res => res.text()).then(text => {
+            const select = document.getElementById('server-list-select');
+            select.innerHTML = '<option value="">-- Välj spellista --</option>';
+            text.split('\n').forEach(line => {
+                if(!line.trim()) return;
+                const [file, name] = line.includes(',') ? line.split(',') : [line, line];
+                const opt = document.createElement('option');
+                opt.value = file.trim(); opt.textContent = name.trim();
+                select.appendChild(opt);
             });
+            const lastId = localStorage.getItem('mobile_last_playlist');
+            if(lastId) { currentPlaylistId = lastId; loadState(); }
+        });
 
         document.getElementById('server-list-select').onchange = (e) => {
-            const val = e.target.value;
-            if(!val) return;
-            if(currentPlaylistId && !confirm("Vill du byta lista? Osorterat arbete försvinner.")) return;
-            
-            currentPlaylistId = val;
+            if(!e.target.value) return;
+            currentPlaylistId = e.target.value;
             currentPlaylistName = e.target.options[e.target.selectedIndex].text;
-            localStorage.setItem('mobile_last_playlist', val);
-            loadCSV(val);
+            localStorage.setItem('mobile_last_playlist', currentPlaylistId);
+            loadCSV(currentPlaylistId);
         };
 
         function loadCSV(file) {
             Papa.parse(file + '?t=' + Date.now(), {
-                download: true,
-                header: true,
+                download: true, header: true,
                 complete: (results) => {
                     songs.queue = results.data.filter(r => r['Track Name']).map(r => ({
                         title: r['Track Name'],
@@ -222,43 +171,40 @@
                         id: r['Track URI'] ? r['Track URI'].split(':')[2] : null
                     }));
                     songs.top = []; songs.bottom = []; songs.neutral = [];
-                    currentIndex = 0;
-                    saveState();
-                    updateCounters();
-                    showView('view-sort');
+                    currentIndex = 0; saveState(); updateCounters(); showView('view-sort');
                 }
             });
         }
 
-        // --- SORTERINGSLOGIK ---
         function updateSortCard() {
             const song = songs.queue[currentIndex];
+            const appBtn = document.getElementById('open-spotify-btn');
             if(!song) {
                 document.getElementById('display-title').innerText = "Klar!";
-                document.getElementById('display-artist').innerText = "Inga fler låtar i kön.";
+                document.getElementById('display-artist').innerText = "Ingen mer i kön.";
                 document.getElementById('sp-iframe').src = "";
-                return;
+                appBtn.style.display = "none"; return;
             }
             document.getElementById('display-title').innerText = song.title;
             document.getElementById('display-artist').innerText = song.artist;
             document.getElementById('sort-progress').innerText = `${currentIndex + 1} / ${songs.queue.length}`;
-            if(song.id) document.getElementById('sp-iframe').src = `https://open.spotify.com/embed/track/${song.id}?utm_source=generator&theme=0`;
+            if(song.id) {
+                document.getElementById('sp-iframe').src = `https://open.spotify.com/embed/track/${song.id}?utm_source=generator&theme=0`;
+                appBtn.style.display = "flex";
+                appBtn.onclick = () => window.location.href = `spotify:track:${song.id}`;
+            } else { appBtn.style.display = "none"; }
         }
 
         function sortCurrent(category) {
             if(!songs.queue[currentIndex]) return;
-            const song = songs.queue.splice(currentIndex, 1)[0];
-            songs[category].push(song);
+            songs[category].push(songs.queue.splice(currentIndex, 1)[0]);
             if(currentIndex >= songs.queue.length) currentIndex = Math.max(0, songs.queue.length - 1);
-            saveState();
-            updateSortCard();
-            updateCounters();
+            saveState(); updateSortCard(); updateCounters();
         }
 
         function nextSong() { if(currentIndex < songs.queue.length - 1) { currentIndex++; updateSortCard(); } }
         function prevSong() { if(currentIndex > 0) { currentIndex--; updateSortCard(); } }
 
-        // --- LISTOR & DRAG/DROP ---
         function renderLists() {
             const render = (containerId, list, type) => {
                 const el = document.getElementById(containerId);
@@ -266,9 +212,15 @@
                 list.forEach((s, i) => {
                     const item = document.createElement('div');
                     item.className = `list-item ${type === 'top' ? 'top-item' : (type === 'bottom' ? 'bot-item' : '')}`;
-                    item.innerHTML = `<span>${i+1}. ${s.artist} - ${s.title}</span>`;
                     
-                    // Återställ menlösa vid klick
+                    let content = `<span>${i+1}. ${s.artist} - ${s.title}</span>`;
+                    
+                    if(type === 'top' || type === 'bottom') {
+                        // Lägg till arkiv-knapp för Topp/Botten
+                        content += `<button class="move-btn" onclick="moveToNeutral('${type}', ${i})">⚙️</button>`;
+                    }
+                    
+                    item.innerHTML = content;
                     if(type === 'neutral') {
                         item.onclick = () => {
                             songs.queue.push(list.splice(i, 1)[0]);
@@ -283,6 +235,15 @@
             render('list-neutral', songs.neutral, 'neutral');
         }
 
+        // Ny funktion för att flytta från listor till menlösa
+        function moveToNeutral(fromCategory, index) {
+            const song = songs[fromCategory].splice(index, 1)[0];
+            songs.neutral.push(song);
+            saveState();
+            renderLists();
+            updateCounters();
+        }
+
         new Sortable(document.getElementById('list-top'), { animation: 150, onEnd: syncSort });
         new Sortable(document.getElementById('list-bottom'), { animation: 150, onEnd: syncSort });
 
@@ -291,7 +252,7 @@
                 const items = document.getElementById(id).children;
                 const newArr = [];
                 for(let i=0; i<items.length; i++) {
-                    const text = items[i].innerText.split('. ')[1];
+                    const text = items[i].querySelector('span').innerText.split('. ')[1];
                     const found = arr.find(s => `${s.artist} - ${s.title}` === text);
                     if(found) newArr.push(found);
                 }
@@ -302,7 +263,6 @@
             saveState();
         }
 
-        // --- STATE & EXPORT ---
         function saveState() {
             if(!currentPlaylistId) return;
             localStorage.setItem('ranker_data_' + currentPlaylistId, JSON.stringify(songs));
@@ -330,7 +290,6 @@
             songs.top.slice(0,10).forEach((s, i) => text += `${i+1}, ${s.artist}, ${s.title}\n`);
             text += `\nSämsta 10:\n`;
             songs.bottom.slice(0,10).forEach((s, i) => text += `${i+1}, ${s.artist}, ${s.title}\n`);
-            
             navigator.clipboard.writeText(text).then(() => alert("Kopierat!"));
         }
     </script>
