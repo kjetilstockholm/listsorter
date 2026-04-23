@@ -240,9 +240,16 @@
             updateCounters();
         }
 
-        new Sortable(document.getElementById('list-top'), { animation: 150, onEnd: syncSort });
-        new Sortable(document.getElementById('list-bottom'), { animation: 150, onEnd: syncSort });
+const sortableMobileOptions = { 
+            animation: 150, 
+            onEnd: syncSort,
+            delay: 250, // Du måste hålla in fingret i 250 millisekunder för att dra
+            delayOnTouchOnly: true, // Detta gäller bara när man använder pekskärm
+            touchStartThreshold: 5 // Tillåter skärmen att förstå skillnad på scroll och drag
+        };
 
+        new Sortable(document.getElementById('list-top'), sortableMobileOptions);
+        new Sortable(document.getElementById('list-bottom'), sortableMobileOptions);
         function syncSort() {
             const updateArr = (id, arr) => {
                 const items = document.getElementById(id).children;
