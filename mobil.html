@@ -54,11 +54,10 @@
         .top-item { border-left-color: var(--spotify-green); }
         .bot-item { border-left-color: var(--danger); }
         
-        /* Ny knapp för att flytta låtar till menlösa */
         .move-btn { 
             background: rgba(255,255,255,0.1); color: #aaa; border: none; 
             width: 30px; height: 30px; border-radius: 50%; font-size: 1rem; 
-            display: flex; align-items: center; justify-content: center; margin-left: 10px;
+            display: flex; align-items: center; justify-content: center; margin-left: 10px; cursor: pointer;
         }
 
         #player-container { height: 80px; background: #000; border-radius: 10px; overflow: hidden; margin-top: auto; flex-shrink: 0; }
@@ -77,7 +76,7 @@
             <button class="btn btn-primary" onclick="showView('view-sort')">🚀 Sortera Låtar <span id="count-all"></span></button>
             <button class="btn" onclick="showView('view-top')">🏆 Topp 10 <span id="count-top"></span></button>
             <button class="btn" onclick="showView('view-bottom')">💩 Botten 10 <span id="count-bottom"></span></button>
-            <button class="btn" onclick="showView('view-neutral')">⚙️ Menlösa <span id="count-neutral"></span></button>
+            <button class="btn" onclick="showView('view-neutral')">🥱 Menlösa <span id="count-neutral"></span></button>
         </div>
         <div class="export-container">
             <button class="btn-export" onclick="exportAll()">📋 KOPIERA RESULTAT</button>
@@ -138,7 +137,6 @@
             updateCounters();
         }
 
-        // Ladda dropdown.txt
         fetch('dropdown.txt?t=' + Date.now()).then(res => res.text()).then(text => {
             const select = document.getElementById('server-list-select');
             select.innerHTML = '<option value="">-- Välj spellista --</option>';
@@ -216,8 +214,7 @@
                     let content = `<span>${i+1}. ${s.artist} - ${s.title}</span>`;
                     
                     if(type === 'top' || type === 'bottom') {
-                        // Lägg till arkiv-knapp för Topp/Botten
-                        content += `<button class="move-btn" onclick="moveToNeutral('${type}', ${i})">⚙️</button>`;
+                        content += `<button class="move-btn" onclick="moveToNeutral('${type}', ${i})" title="Flytta till menlösa">🥱</button>`;
                     }
                     
                     item.innerHTML = content;
@@ -235,7 +232,6 @@
             render('list-neutral', songs.neutral, 'neutral');
         }
 
-        // Ny funktion för att flytta från listor till menlösa
         function moveToNeutral(fromCategory, index) {
             const song = songs[fromCategory].splice(index, 1)[0];
             songs.neutral.push(song);
