@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Svensk Låtkanon 1950-1999</title>
+    <style>
+        :root { 
+            --spotify-green: #1DB954; 
+            --spotify-hover: #1ed760;
+            --bg-color: #121212; 
+            --card-bg: #282828; 
+            --text-main: #FFFFFF;
+            --text-muted: #B3B3B3;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background-color: var(--bg-color); 
+            color: var(--text-main); 
+            margin: 0; 
+            padding: 20px; 
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-top: 20px;
+        }
+
+        h1 { 
+            font-size: 2.5rem; 
+            color: var(--spotify-green); 
+            margin: 0 0 10px 0; 
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        h2 { 
+            font-size: 1.2rem; 
+            color: var(--text-muted); 
+            margin: 0; 
+            font-weight: normal;
+        }
+
+        /* Navigationsknappar */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            transition: all 0.2s ease;
+            flex: 1;
+            min-width: 200px;
+            max-width: 250px;
+            text-align: center;
+        }
+
+        .btn-app {
+            background-color: var(--spotify-green);
+            color: #000;
+        }
+
+        .btn-app:hover {
+            background-color: var(--spotify-hover);
+            transform: scale(1.02);
+        }
+
+        .btn-spotify {
+            background-color: transparent;
+            color: var(--text-main);
+            border: 2px solid var(--text-muted);
+        }
+
+        .btn-spotify:hover {
+            border-color: var(--text-main);
+            transform: scale(1.02);
+        }
+
+        /* Innehållskort */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        h3 {
+            color: var(--spotify-green);
+            border-bottom: 1px solid #444;
+            padding-bottom: 10px;
+            margin-top: 0;
+            font-size: 1.4rem;
+        }
+
+        h4 {
+            color: var(--text-main);
+            margin: 25px 0 10px 0;
+            font-size: 1.1rem;
+        }
+
+        p {
+            margin-top: 0;
+        }
+
+        .highlight {
+            color: var(--spotify-green);
+            font-weight: bold;
+        }
+
+        .warning-box {
+            background-color: rgba(226, 33, 52, 0.1);
+            border-left: 4px solid #e22134;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 20px;
+            font-size: 0.95rem;
+        }
+
+        /* Exempellistor */
+        .example-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .example-list {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .example-list h4 {
+            margin-top: 0;
+            text-align: center;
+            border-bottom: 1px dashed #555;
+            padding-bottom: 10px;
+        }
+
+        ol {
+            padding-left: 20px;
+            margin-bottom: 0;
+            color: var(--text-muted);
+        }
+
+        ol li {
+            margin-bottom: 6px;
+        }
+
+        ol li span {
+            color: var(--text-main);
+        }
+
+        @media (max-width: 600px) {
+            .example-grid {
+                grid-template-columns: 1fr;
+            }
+            .btn {
+                max-width: 100%;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>LEK MED MIG!</h1>
+            <h2>Svensk låtkanon, 1950-1999</h2>
+        </header>
+
+        <nav class="action-buttons">
+            <a href="desktop.html" class="btn btn-app">💻 Datorversion</a>
+            <a href="mobile.html" class="btn btn-app">📱 Mobilversion</a>
+            <a href="#" target="_blank" class="btn btn-spotify">🎧 Spotify-lista</a>
+        </nav>
+
+        <section class="card">
+            <h3>MINIMIINFORMATION</h3>
+            <p>Jättefrivillig och jätterolig lek. Utse de tio bästa och de tio sämsta låtarna (rent subjektivt) från given lista, sorterade från ett till tio (bäst först i bästalistan och sämst först i sämstalistan).</p>
+            
+            <p>Dina listor ska presenteras som svar på denna post, senast <span class="highlight">söndag 10/5, 23:59</span> (Observera att heat IV är fortsatt öppet till söndag 3/5).</p>
+            
+            <p>Är ni osäkra på formatet - titta på exempellistorna i inlägg under detta (eller längre ner på denna sida)! Så länge det inte är två låtar med samma titel i listan så räcker det med låttitel.</p>
+            
+            <div class="warning-box">
+                <strong>OBS!</strong> Inlämnade listor där låtarna inte är rangordnade, som består av bara bäst ELLER sämst, alternativt innehåller fler eller färre än tio låtar, är “ogiltiga”.
+            </div>
+        </section>
+
+        <section class="card">
+            <h3>ÖVERKURS, för nytillkomna (inga nyheter)</h3>
+            
+            <h4>BAKGRUND</h4>
+            <p>Alla låtarna i denna lektävling är hämtade från min sammanställda “svensk låtkanon, 1950-1999”. Denna kanon ska så klart innehålla de största hitsen och de största klassikerna, men även andra låtar som av olika anledningar är värda att kanonisera, till exempel att de är banbrytande, omdiskuterade eller kända av annan anledning än kommersiell framgång. Låtarna kan även representera särskilda musikhistoriskt “viktiga” genrer, som vänsterprogg, punk och hiphop.</p>
+            
+            <h4>SPELLISTORNA</h4>
+            <p>Totalt handlar det om tjugo spellistor i denna den första omgången. Spellistorna är kronologiskt baserade och ska innehålla runt 50 låtar var. Vi kommer att börja i den kronologiska mitten (vilket här blir 1986-1987) och sedan alternerat jobba oss framåt och bakåt i tiden.</p>
+            <p>Har man något sånär anständig musiksmak kommer man säkert att tycka att minst hälften av låtarna är ren skit. Men det råder vi ju bot på när vi kommer in i andra omgången om ett knappt halvår.</p>
+            
+            <h4>FREKVENS</h4>
+            <p>Varje ny spellista kommer i huvudsak att läggas ut på onsdagar eller torsdagar, och röstningen kommer att vara öppen i en <span class="highlight">DRYG VECKA</span>, fram till söndagen följande vecka. Detta innebär följaktligen att spellistorna kommer att presenteras omlott, så att säga (alltså att nästa spellista kommer att presenteras innan denna är "stängd").</p>
+        </section>
+
+        <section class="card">
+            <h3>Exempellistor</h3>
+            <div class="example-grid">
+                
+                <div class="example-list">
+                    <h4>Bäst</h4>
+                    <ol>
+                        <li><span>Pappas pigga pusskalas</span> <em>(bäst)</em></li>
+                        <li><span>Rock i bocken</span></li>
+                        <li><span>Hej vad det går!</span></li>
+                        <li><span>Dans i nödvärn</span></li>
+                        <li><span>Middagen är klar</span></li>
+                        <li><span>Snutbatongen i stjärten</span></li>
+                        <li><span>Disco auf Krankenheit</span></li>
+                        <li><span>Sången om Jesus</span></li>
+                        <li><span>Örat blöder</span></li>
+                        <li><span>Jerry och Anna</span></li>
+                    </ol>
+                </div>
+
+                <div class="example-list">
+                    <h4>Sämst</h4>
+                    <ol>
+                        <li><span>Nu är det jul i Näverberget</span> <em>(sämst)</em></li>
+                        <li><span>Fulbugg bakom berget</span></li>
+                        <li><span>Reggea från Mölnlycke</span></li>
+                        <li><span>Raggar-Epa och Kosken</span></li>
+                        <li><span>Balladen om skogens sus</span></li>
+                        <li><span>Sommarängens strålande sol</span></li>
+                        <li><span>Jag vill ha en hundvalp</span></li>
+                        <li><span>Kyssar som svider</span></li>
+                        <li><span>Jag drömmer om njursten</span></li>
+                        <li><span>Spritnäsan</span></li>
+                    </ol>
+                </div>
+
+            </div>
+        </section>
+
+    </div>
+
+</body>
+</html>
