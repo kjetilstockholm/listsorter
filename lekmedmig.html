@@ -1,10 +1,16 @@
 <!DOCTYPE html>
 <html lang="sv">
 <head>
-    <script>
-        let spotifyUrl = "https://open.spotify.com/playlist/1bvg3InwMPjJlKJ3CjWNnY?si=ada75b24865341f5";
-        let minSiffra = 42;
-    </script>
+<script>
+        let minUrl = "https://open.spotify.com/playlist/1bvg3InwMPjJlKJ3CjWNnY?si=ada75b24865341f5";
+        let mobilUrl = "mobil.html?v=6";
+        let datorUrl = "index.html?v=6";
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("spotifyLanken").href = minUrl;
+            document.getElementById("mobilLanken").href = mobilUrl;
+            document.getElementById("datorLanken").href = datorUrl;
+        });
+</script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -211,11 +217,9 @@
         </section>
 
         <nav class="action-buttons">
-            <a href="index.html?v=7" class="btn btn-app">💻 Datorversion</a>
-            <a href="mobil.html?v=7" class="btn btn-app">📱 Mobilversion</a>
-            <a href=
-                <script>document.getElementById("spotifyUrl").innerText = spotifyUrl;</script>
-                target="_blank" class="btn btn-spotify">🎧 Spotify-lista</a>
+            <a id="datorLanken" href="#" class="btn btn-app">💻 Datorversion</a>
+            <a id="mobilLanken" href="#" class="btn btn-app">📱 Mobilversion</a>
+            <a id="spotifyLanken" href="#" target="_blank" class="btn btn-spotify">🎧 Spotify-lista</a>
         </nav>
 
         <section class="card">
