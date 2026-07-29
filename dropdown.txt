@@ -1,7 +1,7 @@
+1_(98-99).csv, Lista #1 (1998-1999) - deadline 9 augusti
 18_(1970-1972).csv, Lista #18 (1970-1972) - deadline 2 augusti
-17_(73-74).csv, Lista #17 (1973-1974) - deadline 26 juli
-2_(96-97).csv, Lista #2 (1996-1997) - deadline 19 juli
 ,--- gamla listor ---
+2_(96-97).csv, Lista #2 (1996-1997)
 3_(1995).csv, Lista #3 (1995)
 4_(1994).csv, Lista #4 (1994)
 5_(1993).csv, Lista #5 (1993)
@@ -16,3 +16,4 @@
 14_(1979).csv, Lista #14 (1979)
 15_(1977-1978).csv, Lista #15 (1977-1978)
 16_(75-76).csv, Lista #16 (1975-1976)
+17_(73-74).csv, Lista #17 (1973-1974)
