@@ -1,6 +1,7 @@
+20_(50-64).csv, Lista #20 (1950-1964) - deadline 23 augusti
 19_(65-69).csv, Lista #19 (1965-1969) - deadline 16 augusti
-1_(98-99).csv, Lista #1 (1998-1999) - deadline 9 augusti
 ,--- gamla listor ---
+1_(98-99).csv, Lista #1 (1998-1999)
 2_(96-97).csv, Lista #2 (1996-1997)
 3_(1995).csv, Lista #3 (1995)
 4_(1994).csv, Lista #4 (1994)
