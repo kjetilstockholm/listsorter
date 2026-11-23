@@ -1,4 +1,4 @@
-Andra_omg_8.csv, Andra omgången 8/8 - deadline 22 nov
+ Uppsamling_2.csv, Uppsamling 2 - deadline 22 nov
 ,--- gamla listor ---
 1_(98-99).csv, Lista #1 (1998-1999)
 2_(96-97).csv, Lista #2 (1996-1997)
@@ -32,3 +32,4 @@ Andra_omg_4_av_8.csv, Andra omgången 4/8
 Andra_omg_5_av_8.csv, Andra omgången 5/8
 Andra_omg_6_av_8.csv, Andra omgången 6/8
 Andra_omg_7_av_8.csv, Andra omgången 7/8
+Andra_omg_8.csv, Andra omgången 8/8
